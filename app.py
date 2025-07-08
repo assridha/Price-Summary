@@ -96,7 +96,7 @@ def get_institutional_btcs():
 
 st.set_page_config(page_title="Bitcoin Metrics Dashboard", layout="wide")
 
-st.title("Bitcoin Price & Metrics")
+st.title("Bitcoin at a Glance")
 
 # Fetch data
 btc_data = get_coingecko_data()
@@ -107,12 +107,27 @@ latest_ma, prev_ma = get_onchain_volume_mas()
 institutional_btc, prev_institutional_btc = get_institutional_btcs()
 
 if btc_data:
-    # Display Price and 24h Return
-    col1, col2 = st.columns([3, 1]) 
+    st.subheader("Price and Market Cap")
+    # Display Price and Market Cap
+    col1, col2 = st.columns(2)
     price = btc_data.get('current_price', 'N/A')
     price_change = btc_data.get('price_change_percentage_24h', 0)
     
-    col1.metric("Price", f"${price:,.2f}", f"{price_change:.2f}%")
+    col1.metric("Price", f"${price:,.0f}", f"{price_change:.2f}%")
+
+    market_cap = btc_data.get('market_cap', 'N/A')
+    market_cap_change = btc_data.get('market_cap_change_percentage_24h', 0)
+
+    if market_cap != 'N/A':
+        if market_cap > 1_000_000_000_000:
+            mc_display = f"${market_cap/1_000_000_000_000:.2f} T"
+        elif market_cap > 1_000_000_000:
+            mc_display = f"${market_cap/1_000_000_000:.2f} B"
+        else:
+            mc_display = f"${market_cap/1_000_000:.2f} M"
+        col2.metric("Market Cap", mc_display, f"{market_cap_change:.2f}%")
+    else:
+        col2.metric("Market Cap", "N/A")
     
     st.markdown("---")
     
@@ -164,7 +179,7 @@ if btc_data:
         percentage_of_terminal = circulating_supply / total_supply
         p_col1, _ = col1.columns([0.8, 0.2])
         p_col1.progress(percentage_of_terminal)
-        col1.markdown(f'<p style="margin-top: -1rem; font-size: 0.875rem;">{percentage_of_terminal:.2%} of Terminal Supply</p>', unsafe_allow_html=True)
+        col1.markdown(f'<p style="margin-top: -1rem; font-size: 0.875rem;">{percentage_of_terminal:.2%} of 21M</p>', unsafe_allow_html=True)
     else:
         col1.metric("Circulating Supply", "N/A")
 
@@ -177,7 +192,7 @@ if btc_data:
         percentage_of_total_supply = institutional_btc / total_supply
         p_col2, _ = col2.columns([0.8, 0.2])
         p_col2.progress(percentage_of_total_supply)
-        col2.markdown(f'<p style="margin-top: -1rem; font-size: 0.875rem;">{percentage_of_total_supply:.2%} of Terminal Supply</p>', unsafe_allow_html=True)
+        col2.markdown(f'<p style="margin-top: -1rem; font-size: 0.875rem;">{percentage_of_total_supply:.2%} of 21M</p>', unsafe_allow_html=True)
     else:
         col2.metric("Institutional Holdings", "N/A")
 
