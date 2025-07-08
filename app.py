@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import timedelta, datetime
+import streamlit.components.v1 as components
 
 # Cache data for 60 seconds
 @st.cache_data(ttl=timedelta(minutes=1))
@@ -244,4 +245,41 @@ section[data-testid="st-emotion-cache-1pxazr7"] {
     }
 }
 </style>
-""", unsafe_allow_html=True) 
+""", unsafe_allow_html=True)
+
+# Replace your old components.html call with this one
+components.html(
+    """
+    <script>
+    function sendHeight() {
+      // Use document.documentElement.scrollHeight for better accuracy
+      const height = document.documentElement.scrollHeight;
+      window.parent.postMessage({height: height}, "https://assridha.github.io");
+    }
+
+    // Use a MutationObserver to watch for any changes to the DOM
+    const observer = new MutationObserver(sendHeight);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true
+    });
+
+    // Also use a ResizeObserver for good measure
+    const ro = new ResizeObserver(sendHeight);
+    ro.observe(document.documentElement);
+
+    // As a fallback, poll the height every second for 5 seconds
+    let an_extra_check = 0;
+    const interval = setInterval(() => {
+        sendHeight();
+        an_extra_check++;
+        if (an_extra_check > 5) {
+            clearInterval(interval);
+        }
+    }, 1000);
+
+    </script>
+    """,
+    height=0,
+) 
