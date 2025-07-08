@@ -96,7 +96,7 @@ def get_institutional_btcs():
 
 st.set_page_config(page_title="Bitcoin Metrics Dashboard", layout="wide")
 
-st.title("Bitcoin at a Glance")
+# st.title("Bitcoin at a Glance")
 
 # Fetch data
 btc_data = get_coingecko_data()
@@ -227,6 +227,9 @@ hr {
 h2 {
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
+}
+section[data-testid="st-emotion-cache-1pxazr7"] {
+    padding-top: 1rem;
 }
 @media (max-width: 800px) {
     div[data-testid="stHorizontalBlock"] {
