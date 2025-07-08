@@ -112,7 +112,7 @@ if btc_data:
     price = btc_data.get('current_price', 'N/A')
     price_change = btc_data.get('price_change_percentage_24h', 0)
     
-    col1.metric("Price", f"${price:,.0f}", f"{price_change:.2f}%")
+    col1.metric("Price", f"${price:,.2f}", f"{price_change:.2f}%")
     
     st.markdown("---")
     
@@ -204,6 +204,26 @@ div[data-testid="metric-container"] {
 }
 div[data-testid="stMetricValue"] {
     font-size: 28px;
+}
+hr {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+h2 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+@media (max-width: 800px) {
+    div[data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+        gap: 1rem !important;
+    }
+
+    /* Target each column div directly within the horizontal block */
+    div[data-testid="stHorizontalBlock"] > div {
+        flex: 1 1 calc(50% - 1rem) !important;
+        min-width: calc(50% - 1rem) !important;
+    }
 }
 </style>
 """, unsafe_allow_html=True) 
