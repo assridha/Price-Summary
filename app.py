@@ -212,12 +212,19 @@ else:
 
 st.markdown("""
 <style>
-div[data-testid="metric-container"] {
-    border-radius: 10px;
-    padding: 20px;
-    background-color: #f0f2f6;
-    border: 1px solid #e6e6e6;
+/* Remove all padding from the main block container */
+.block-container {
+    padding: 0rem !important;
 }
+
+/* Flatten the metric containers to remove card look */
+div[data-testid="metric-container"] {
+    border: none !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    padding: 1rem 0 !important; /* Give metrics some vertical space */
+}
+
 div[data-testid="stMetricValue"] {
     font-size: 28px;
 }
@@ -228,9 +235,6 @@ hr {
 h2 {
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
-}
-section[data-testid="st-emotion-cache-1pxazr7"] {
-    padding-top: 1rem;
 }
 @media (max-width: 800px) {
     div[data-testid="stHorizontalBlock"] {
