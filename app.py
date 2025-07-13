@@ -56,6 +56,34 @@ def get_difficulty_adjustment():
     return None
 
 @st.cache_data(ttl=timedelta(hours=6))
+def get_block_height_7d_ago():
+    """Fetches the block height from 7 days ago using mempool.space API."""
+    try:
+        # Get timestamp 7 days ago (in seconds)
+        seven_days_ago = int((datetime.now() - timedelta(days=7)).timestamp())
+        
+        url = f"https://mempool.space/api/v1/mining/blocks/timestamp/{seven_days_ago}"
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        
+        return data.get('height', 'N/A')
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching block height from 7 days ago: {e}")
+    return 'N/A'
+
+def calculate_issuance_per_block(current_block_height):
+    """Calculate the current issuance per block using the halving formula."""
+    if current_block_height == 'N/A':
+        return 0
+    
+    # Formula: 3.125 * 2^(-floor([current block height]/210000-4))
+    import math
+    halving_cycles = math.floor(current_block_height / 210000 - 4)
+    issuance = 3.125 * (2 ** (-halving_cycles))
+    return issuance
+
+@st.cache_data(ttl=timedelta(hours=6))
 def get_onchain_volume_mas():
     """Fetches and calculates the 7-day moving average of on-chain volume."""
     url = "https://api.blockchain.info/charts/estimated-transaction-volume?format=json"
@@ -84,13 +112,22 @@ def get_institutional_btcs():
             'private_companies', 'public_companies'
         ]
         
-        latest_total, previous_total = "N/A", "N/A"
+        latest_total, week_ago_total = "N/A", "N/A"
         if len(df) > 0:
             latest_total = df.loc[0, columns_to_sum].sum()
-        if len(df) > 1:
-            previous_total = df.loc[1, columns_to_sum].sum()
+            latest_timestamp = df.loc[0, 'timestamp']
             
-        return latest_total, previous_total
+            # Find entry closest to 7 days ago
+            target_date = latest_timestamp - timedelta(days=7)
+            
+            # Find the index of the entry closest to 7 days ago
+            df['time_diff'] = abs(df['timestamp'] - target_date)
+            closest_idx = df['time_diff'].idxmin()
+            
+            if closest_idx is not None:
+                week_ago_total = df.loc[closest_idx, columns_to_sum].sum()
+            
+        return latest_total, week_ago_total
     except Exception as e:
         st.error(f"Error fetching institutional holdings: {e}")
     return "N/A", "N/A"
@@ -102,10 +139,11 @@ st.set_page_config(page_title="Bitcoin Metrics Dashboard", layout="wide")
 # Fetch data
 btc_data = get_coingecko_data()
 block_height = get_block_height()
+block_height_7d_ago = get_block_height_7d_ago()
 avg_block_time = get_avg_block_time()
 difficulty_data = get_difficulty_adjustment()
 latest_ma, prev_ma = get_onchain_volume_mas()
-institutional_btc, prev_institutional_btc = get_institutional_btcs()
+institutional_btc, week_ago_institutional_btc = get_institutional_btcs()
 
 if btc_data:
     st.subheader("Price and Market Cap")
@@ -169,12 +207,26 @@ if btc_data:
     total_supply = 21000000
 
     if circulating_supply != 'N/A':
-        daily_increase_delta = None
-        if avg_block_time != "N/A" and avg_block_time > 0:
-            daily_increase = 270000 / avg_block_time
-            daily_increase_delta = f"{int(daily_increase):,} BTC today"
+        supply_increase_delta = None
+        if block_height != "N/A" and block_height_7d_ago != "N/A":
+            try:
+                current_height = int(block_height)
+                height_7d_ago = int(block_height_7d_ago)
+                
+                # Calculate blocks mined in the last 7 days
+                blocks_mined = current_height - height_7d_ago
+                
+                # Calculate issuance per block
+                issuance_per_block = calculate_issuance_per_block(current_height)
+                
+                # Calculate total supply increase over 7 days
+                supply_increase = blocks_mined * issuance_per_block
+                
+                supply_increase_delta = f"{supply_increase:.0f} BTC (7d)"
+            except (ValueError, TypeError):
+                supply_increase_delta = None
         
-        col1.metric("Circulating Supply", f"{int(circulating_supply):,} BTC", delta=daily_increase_delta)
+        col1.metric("Circulating Supply", f"{int(circulating_supply):,} BTC", delta=supply_increase_delta)
 
         percentage_of_terminal = circulating_supply / total_supply
         p_col1, _ = col1.columns([0.8, 0.2])
@@ -185,9 +237,9 @@ if btc_data:
 
     if institutional_btc != "N/A":
         delta_str = "No Change"
-        if prev_institutional_btc != "N/A" and prev_institutional_btc > 0:
-            delta = institutional_btc - prev_institutional_btc
-            delta_str = f"{delta:,.0f} BTC today"
+        if week_ago_institutional_btc != "N/A" and week_ago_institutional_btc > 0:
+            delta = institutional_btc - week_ago_institutional_btc
+            delta_str = f"{delta:,.0f} BTC (7d)"
         
         # Create custom layout with tooltip
         with col2:
@@ -203,7 +255,8 @@ if btc_data:
                     • Countries/governments<br>
                     • ETFs and investment funds<br>
                     • DeFi protocols<br><br>
-                    Data is updated daily and sourced from bitbo.io.
+                    Data is updated daily and sourced from bitbo.io.<br>
+                    Change shown is over the past 7 days.
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -230,7 +283,8 @@ if btc_data:
                     • Countries/governments<br>
                     • ETFs and investment funds<br>
                     • DeFi protocols<br><br>
-                    Data is updated daily and sourced from public disclosures and regulatory filings.
+                    Data is updated daily and sourced from bitbo.io.<br>
+                    Change shown is over the past 7 days.
                 </div>
             </div>
             """, unsafe_allow_html=True)
