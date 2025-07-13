@@ -146,7 +146,7 @@ latest_ma, prev_ma = get_onchain_volume_mas()
 institutional_btc, week_ago_institutional_btc = get_institutional_btcs()
 
 if btc_data:
-    st.subheader("Price and Market Cap")
+    st.subheader("Price and Market Cap", anchor=False)
     # Display Price and Market Cap
     col1, col2 = st.columns(2)
     price = btc_data.get('current_price', 'N/A')
@@ -170,7 +170,7 @@ if btc_data:
     st.markdown("---")
     
     # Display Blockchain stats
-    st.subheader("Blockchain Stats")
+    st.subheader("Blockchain Stats", anchor=False)
     col1, col2, col3 = st.columns(3)
 
     if block_height != "N/A":
@@ -200,7 +200,7 @@ if btc_data:
     st.markdown("---")
 
     # Display Supply and Volume metrics
-    st.subheader("Supply & Volume")
+    st.subheader("Supply & Volume", anchor=False)
     col1, col2, col3 = st.columns(3)
 
     circulating_supply = btc_data.get('circulating_supply', 'N/A')
@@ -222,7 +222,10 @@ if btc_data:
                 # Calculate total supply increase over 7 days
                 supply_increase = blocks_mined * issuance_per_block
                 
-                supply_increase_delta = f"{supply_increase:.0f} BTC (7d)"
+                # Calculate daily average
+                daily_avg_supply_increase = supply_increase / 7
+                
+                supply_increase_delta = f"{daily_avg_supply_increase:.0f} BTC/day"
             except (ValueError, TypeError):
                 supply_increase_delta = None
         
@@ -239,7 +242,8 @@ if btc_data:
         delta_str = "No Change"
         if week_ago_institutional_btc != "N/A" and week_ago_institutional_btc > 0:
             delta = institutional_btc - week_ago_institutional_btc
-            delta_str = f"{delta:,.0f} BTC (7d)"
+            daily_avg_delta = delta / 7
+            delta_str = f"{daily_avg_delta:,.0f} BTC/day"
         
         # Create custom layout with tooltip
         with col2:
@@ -256,13 +260,13 @@ if btc_data:
                     • ETFs and investment funds<br>
                     • DeFi protocols<br><br>
                     Data is updated daily and sourced from bitbo.io.<br>
-                    Change shown is over the past 7 days.
+                    Change shown is daily average over the past 7 days.
                 </div>
             </div>
             """, unsafe_allow_html=True)
             
             # Value and delta display
-            st.markdown(f'<p style="font-size: 28px; margin: 0; font-weight: 600;">{int(institutional_btc):,} BTC</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="font-size: 28px; margin: 0">{int(institutional_btc):,} BTC</p>', unsafe_allow_html=True)
             color = "green" if "+" in delta_str or delta_str == "No Change" else "red"
             st.markdown(f'<p style="font-size: 14px; margin: 0; color: {color};">{delta_str}</p>', unsafe_allow_html=True)
         
@@ -284,7 +288,7 @@ if btc_data:
                     • ETFs and investment funds<br>
                     • DeFi protocols<br><br>
                     Data is updated daily and sourced from bitbo.io.<br>
-                    Change shown is over the past 7 days.
+                    Change shown is daily average over the past 7 days.
                 </div>
             </div>
             """, unsafe_allow_html=True)
