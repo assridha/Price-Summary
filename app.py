@@ -152,7 +152,7 @@ if btc_data:
     price = btc_data.get('current_price', 'N/A')
     price_change = btc_data.get('price_change_percentage_24h', 0)
     
-    col1.metric("Price", f"${price:,.0f}", f"{price_change:.2f}%")
+    col1.metric("Price", f"${price:,.0f}", f"{price_change:.2f}% (24h)")
 
     market_cap = btc_data.get('market_cap', 'N/A')
 
@@ -246,7 +246,7 @@ if btc_data:
             # Title with tooltip
             st.markdown("""
             <div class="tooltip-container">
-                <span class="tooltip-text"><strong>Institutional Holdings</strong> ℹ️</span>
+                <span class="tooltip-text">Institutional Holdings ℹ️</span>
                 <div class="tooltip-content">
                     <strong>Institutional Holdings</strong> tracks Bitcoin held by:<br>
                     • Public companies (MicroStrategy, Tesla, etc.)<br>
@@ -274,7 +274,7 @@ if btc_data:
         with col2:
             st.markdown("""
             <div class="tooltip-container">
-                <span class="tooltip-text"><strong>Institutional Holdings</strong> ℹ️</span>
+                <span class="tooltip-text">Institutional Holdings ℹ️</span>
                 <div class="tooltip-content">
                     <strong>Institutional Holdings</strong> tracks Bitcoin held by:<br>
                     • Public companies (MicroStrategy, Tesla, etc.)<br>
@@ -296,7 +296,7 @@ if btc_data:
             delta = latest_ma - prev_ma
             delta_percent = (delta / prev_ma) * 100
             delta_str = f"{delta_percent:+.2f}% today"
-        col3.metric("Daily Onchain Volume (7d MA)", f"{int(latest_ma):,}", delta=delta_str)
+        col3.metric("Daily Onchain Volume (7d MA)", f"{int(latest_ma):,} BTC", delta=delta_str)
     else:
         col3.metric("Daily Onchain Volume (7d MA)", "N/A")
 
