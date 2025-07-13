@@ -381,24 +381,44 @@ h2 {
 
 st.html("""
 <script>
-function sendHeight() {
-  const height = document.body.scrollHeight;
-  // The targetOrigin MUST match your Jekyll site's URL for security
-  // For local testing, you can use "*" but it's not recommended for production
+function sendMessageToParent(message) {
+  // Using '*' is less secure but great for debugging.
+  // For production, you should replace '*' with your actual site's origin.
   const targetOrigin = "*"; 
-  window.parent.postMessage({ height: height }, targetOrigin);
+  window.parent.postMessage(message, targetOrigin);
 }
 
-// Send height on initial load and whenever the content changes.
-// Using MutationObserver is the most reliable way.
-const observer = new MutationObserver(sendHeight);
+function sendHeight() {
+  const height = document.body.scrollHeight;
+  sendMessageToParent({ height: height });
+  console.log("Streamlit App: Sent height to parent:", height);
+}
+
+// Send height on initial load and after a short delay to ensure rendering is complete
+window.addEventListener('load', () => {
+    sendHeight();
+    setTimeout(sendHeight, 300); // Send again after a small delay
+});
+
+// Use MutationObserver for dynamic content changes
+const observer = new MutationObserver(debounce(sendHeight, 150));
 observer.observe(document.body, {
   attributes: true, 
   childList: true, 
   subtree: true 
 });
 
-// Also send height on load as a fallback
-window.addEventListener('load', sendHeight);
+// Debounce function to prevent spamming messages
+function debounce(func, delay) {
+  let timeout;
+  return function() {
+    const context = this;
+    const args = arguments;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), delay);
+  };
+}
+
+console.log("Streamlit App: Iframe script loaded and ready.");
 </script>
-""") 
+""")
