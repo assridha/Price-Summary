@@ -385,7 +385,7 @@ function sendHeight() {
   const height = document.body.scrollHeight;
   // The targetOrigin MUST match your Jekyll site's URL for security
   // For local testing, you can use "*" but it's not recommended for production
-  const targetOrigin = "https://assridha.github.io"; 
+  const targetOrigin = "*"; 
   window.parent.postMessage({ height: height }, targetOrigin);
 }
 
