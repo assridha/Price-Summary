@@ -152,7 +152,14 @@ if btc_data:
     price = btc_data.get('current_price', 'N/A')
     price_change = btc_data.get('price_change_percentage_24h', 0)
     
-    col1.metric("Price", f"${price:,.0f}", f"{price_change:.2f}% (24h)")
+    col1.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Price</p>', unsafe_allow_html=True)
+    price_value_str = f'<p style="font-size: 28px; line-height: 1;">${price:,.0f}</p>'
+    col1.markdown(price_value_str, unsafe_allow_html=True)
+    if price_change is not None:
+        color = "#2E8B57" if price_change >= 0 else "#D22B2B"
+        arrow = "▲" if price_change >= 0 else "▼"
+        delta_str = f"{abs(price_change):.2f}% (24h)"
+        col1.markdown(f'<p style="font-size: 0.875rem; color: {color}; margin:0;">{arrow} {delta_str}</p>', unsafe_allow_html=True)
 
     market_cap = btc_data.get('market_cap', 'N/A')
 
@@ -163,7 +170,10 @@ if btc_data:
             mc_display = f"${market_cap/1_000_000_000:.2f} B"
         else:
             mc_display = f"${market_cap/1_000_000:.2f} M"
-        col2.metric("Market Cap", mc_display)
+        
+        col2.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Market Cap</p>', unsafe_allow_html=True)
+        mc_value_str = f'<p style="font-size: 28px; line-height: 1;">{mc_display}</p>'
+        col2.markdown(mc_value_str, unsafe_allow_html=True)
     else:
         col2.metric("Market Cap", "N/A")
     
@@ -174,12 +184,22 @@ if btc_data:
     col1, col2, col3 = st.columns(3)
 
     if block_height != "N/A":
-        col1.metric("Block Height", f"{int(block_height):,}")
+        col1.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Block Height</p>', unsafe_allow_html=True)
+        bh_value_str = f'<p style="font-size: 28px; line-height: 1;">{int(block_height):,}</p>'
+        col1.markdown(bh_value_str, unsafe_allow_html=True)
     else:
         col1.metric("Block Height", "N/A")
 
     if avg_block_time != "N/A":
-        col2.metric("Avg Block Time", f"{avg_block_time:.2f}s", f"{avg_block_time - 600:.2f}s vs target")
+        col2.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Avg Block Time</p>', unsafe_allow_html=True)
+        abt_value_str = f'<p style="font-size: 28px; line-height: 1;">{avg_block_time:.2f}s</p>'
+        col2.markdown(abt_value_str, unsafe_allow_html=True)
+        delta_time = avg_block_time - 600
+        # For block time, lower is better. So red for positive delta.
+        color = "#2E8B57" if delta_time <= 0 else "#D22B2B"
+        arrow = "▼" if delta_time <= 0 else "▲"
+        delta_str = f"{abs(delta_time):.2f}s vs target"
+        col2.markdown(f'<p style="font-size: 0.875rem; color: {color}; margin:0;">{arrow} {delta_str}</p>', unsafe_allow_html=True)
     else:
         col2.metric("Avg Block Time", "N/A")
 
@@ -191,7 +211,15 @@ if btc_data:
             
             difficulty_in_terra = difficulty / (10**12)
             difficulty_change_percent = (change_factor - 1) * 100
-            col3.metric("Latest Difficulty", f"{difficulty_in_terra:.2f} T", f"{difficulty_change_percent:+.2f}%")
+            
+            col3.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Latest Difficulty</p>', unsafe_allow_html=True)
+            diff_value_str = f'<p style="font-size: 28px; line-height: 1;">{difficulty_in_terra:.2f} T</p>'
+            col3.markdown(diff_value_str, unsafe_allow_html=True)
+            # For difficulty, higher is better for network security.
+            color = "#2E8B57" if difficulty_change_percent >= 0 else "#D22B2B"
+            arrow = "▲" if difficulty_change_percent >= 0 else "▼"
+            delta_str = f"{abs(difficulty_change_percent):.2f}%"
+            col3.markdown(f'<p style="font-size: 0.875rem; color: {color}; margin:0;">{arrow} {delta_str}</p>', unsafe_allow_html=True)
         else:
             col3.metric("Latest Difficulty", "N/A")
     else:
@@ -229,7 +257,16 @@ if btc_data:
             except (ValueError, TypeError):
                 supply_increase_delta = None
         
-        col1.metric("Circulating Supply", f"{int(circulating_supply):,} BTC", delta=supply_increase_delta)
+        col1.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Circulating Supply</p>', unsafe_allow_html=True)
+        supply_str_value = f"""
+        <div style="display: flex; align-items: baseline; justify-content: left; line-height: 1;">
+            <span style="font-size: 28px;">{int(circulating_supply):,}</span>
+            <span style="font-size: 16px; margin-left: 8px;">BTC</span>
+        </div>
+        """
+        col1.markdown(supply_str_value, unsafe_allow_html=True)
+        if supply_increase_delta:
+            col1.markdown(f'<p style="font-size: 0.875rem; color: #2E8B57; margin:0;">▲ {supply_increase_delta}</p>', unsafe_allow_html=True)
 
         percentage_of_terminal = circulating_supply / total_supply
         p_col1, _ = col1.columns([0.8, 0.2])
@@ -244,21 +281,28 @@ if btc_data:
             delta = institutional_btc - week_ago_institutional_btc
             daily_avg_delta = delta / 7
         
-        if daily_avg_delta == 0:
-            delta_str = "No Change"
-        else:
-            delta_str = f"{daily_avg_delta:+,.0f} BTC/day"
-
         tooltip_text = """Institutional Holdings tracks Bitcoin held by: Public companies (MicroStrategy, Tesla, etc.), Private companies, Mining companies, Countries/governments, ETFs and DeFi protocols.
 Data is updated daily and sourced from bitbo.io. Change shown is daily average over the past 7 days.
 """
         
-        col2.metric(
-            label="Institutional Holdings",
-            value=f"{int(institutional_btc):,} BTC",
-            delta=delta_str,
-            help=tooltip_text
-        )
+        col2.markdown(f'<p style="font-size: 0.875rem; color: black; margin:0;" title="{tooltip_text.strip()}">Institutional Holdings</p>', unsafe_allow_html=True)
+        institutional_btc_str_value = f"""
+        <div style="display: flex; align-items: baseline; justify-content: left; line-height: 1;">
+            <span style="font-size: 28px;">{int(institutional_btc):,}</span>
+            <span style="font-size: 16px; margin-left: 8px;">BTC</span>
+        </div>
+        """
+        col2.markdown(institutional_btc_str_value, unsafe_allow_html=True)
+
+        if daily_avg_delta == 0:
+            delta_str = "No Change"
+            color = "grey"
+            arrow = ""
+        else:
+            delta_str = f"{abs(daily_avg_delta):,.0f} BTC/day"
+            color = "#2E8B57" if daily_avg_delta > 0 else "#D22B2B"
+            arrow = "▲" if daily_avg_delta > 0 else "▼"
+        col2.markdown(f'<p style="font-size: 0.875rem; color: {color}; margin:0;">{arrow} {delta_str}</p>', unsafe_allow_html=True)
         
         percentage_of_total_supply = institutional_btc / total_supply
         p_col2, _ = col2.columns([0.8, 0.2])
@@ -271,12 +315,24 @@ Data is updated daily and sourced from bitbo.io. Change shown is daily average o
         col2.metric(label="Institutional Holdings", value="N/A", help=tooltip_text)
 
     if latest_ma != "N/A":
-        delta_str = "No Change"
+        col3.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Daily Onchain Volume (7d MA)</p>', unsafe_allow_html=True)
+        latest_ma_str_value = f"""
+        <div style="display: flex; align-items: baseline; justify-content: left; line-height: 1;">
+            <span style="font-size: 28px;">{int(latest_ma):,}</span>
+            <span style="font-size: 16px; margin-left: 8px;">BTC</span>
+        </div>
+        """
+        col3.markdown(latest_ma_str_value, unsafe_allow_html=True)
+
         if prev_ma != "N/A" and prev_ma > 0:
             delta = latest_ma - prev_ma
             delta_percent = (delta / prev_ma) * 100
-            delta_str = f"{delta_percent:+.2f}% today"
-        col3.metric("Daily Onchain Volume (7d MA)", f"{int(latest_ma):,} BTC", delta=delta_str)
+            color = "#2E8B57" if delta > 0 else "#D22B2B"
+            arrow = "▲" if delta > 0 else "▼"
+            delta_str = f"{abs(delta_percent):.2f}% today"
+            col3.markdown(f'<p style="font-size: 0.875rem; color: {color}; margin:0;">{arrow} {delta_str}</p>', unsafe_allow_html=True)
+        else:
+            col3.markdown('<p style="font-size: 0.875rem; color: grey; margin:0;">No Change</p>', unsafe_allow_html=True)
     else:
         col3.metric("Daily Onchain Volume (7d MA)", "N/A")
 
