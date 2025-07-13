@@ -239,60 +239,36 @@ if btc_data:
         col1.metric("Circulating Supply", "N/A")
 
     if institutional_btc != "N/A":
-        delta_str = "No Change"
+        daily_avg_delta = 0
         if week_ago_institutional_btc != "N/A" and week_ago_institutional_btc > 0:
             delta = institutional_btc - week_ago_institutional_btc
             daily_avg_delta = delta / 7
-            delta_str = f"{daily_avg_delta:,.0f} BTC/day"
         
-        # Create custom layout with tooltip
-        with col2:
-            # Title with tooltip
-            st.markdown("""
-            <div class="tooltip-container">
-                <span class="tooltip-text">Institutional Holdings ℹ️</span>
-                <div class="tooltip-content">
-                    <strong>Institutional Holdings</strong> tracks Bitcoin held by:<br>
-                    • Public companies (MicroStrategy, Tesla, etc.)<br>
-                    • Private companies<br>
-                    • Mining companies<br>
-                    • Countries/governments<br>
-                    • ETFs and investment funds<br>
-                    • DeFi protocols<br><br>
-                    Data is updated daily and sourced from bitbo.io.<br>
-                    Change shown is daily average over the past 7 days.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Value and delta display
-            st.markdown(f'<p style="font-size: 28px; margin: 0">{int(institutional_btc):,} BTC</p>', unsafe_allow_html=True)
-            color = "green" if "+" in delta_str or delta_str == "No Change" else "red"
-            st.markdown(f'<p style="font-size: 14px; margin: 0; color: {color};">{delta_str}</p>', unsafe_allow_html=True)
+        if daily_avg_delta == 0:
+            delta_str = "No Change"
+        else:
+            delta_str = f"{daily_avg_delta:+,.0f} BTC/day"
+
+        tooltip_text = """Institutional Holdings tracks Bitcoin held by: Public companies (MicroStrategy, Tesla, etc.), Private companies, Mining companies, Countries/governments, ETFs and DeFi protocols.
+Data is updated daily and sourced from bitbo.io. Change shown is daily average over the past 7 days.
+"""
+        
+        col2.metric(
+            label="Institutional Holdings",
+            value=f"{int(institutional_btc):,} BTC",
+            delta=delta_str,
+            help=tooltip_text
+        )
         
         percentage_of_total_supply = institutional_btc / total_supply
         p_col2, _ = col2.columns([0.8, 0.2])
         p_col2.progress(percentage_of_total_supply)
         col2.markdown(f'<p style="margin-top: -1rem; font-size: 0.875rem;">{percentage_of_total_supply:.2%} of 21M</p>', unsafe_allow_html=True)
     else:
-        with col2:
-            st.markdown("""
-            <div class="tooltip-container">
-                <span class="tooltip-text">Institutional Holdings ℹ️</span>
-                <div class="tooltip-content">
-                    <strong>Institutional Holdings</strong> tracks Bitcoin held by:<br>
-                    • Public companies (MicroStrategy, Tesla, etc.)<br>
-                    • Private companies<br>
-                    • Mining companies<br>
-                    • Countries/governments<br>
-                    • ETFs and investment funds<br>
-                    • DeFi protocols<br><br>
-                    Data is updated daily and sourced from bitbo.io.<br>
-                    Change shown is daily average over the past 7 days.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            st.markdown(f'<p style="font-size: 28px; margin: 0; font-weight: 600;">N/A</p>', unsafe_allow_html=True)
+        tooltip_text = """Institutional Holdings** tracks Bitcoin held by: Public companies (MicroStrategy, Tesla, etc.), Private companies, Mining companies, Countries/governments, ETFs and investment funds and DeFi protocols.
+Data is updated daily and sourced from bitbo.io. Change shown is daily average over the past 7 days.
+"""
+        col2.metric(label="Institutional Holdings", value="N/A", help=tooltip_text)
 
     if latest_ma != "N/A":
         delta_str = "No Change"
