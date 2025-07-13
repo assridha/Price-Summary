@@ -117,7 +117,6 @@ if btc_data:
     col1.metric("Price", f"${price:,.0f}", f"{price_change:.2f}%")
 
     market_cap = btc_data.get('market_cap', 'N/A')
-    market_cap_change = btc_data.get('market_cap_change_percentage_24h', 0)
 
     if market_cap != 'N/A':
         if market_cap > 1_000_000_000_000:
@@ -126,7 +125,7 @@ if btc_data:
             mc_display = f"${market_cap/1_000_000_000:.2f} B"
         else:
             mc_display = f"${market_cap/1_000_000:.2f} M"
-        col2.metric("Market Cap", mc_display, f"{market_cap_change:.2f}%")
+        col2.metric("Market Cap", mc_display)
     else:
         col2.metric("Market Cap", "N/A")
     
@@ -173,9 +172,9 @@ if btc_data:
         daily_increase_delta = None
         if avg_block_time != "N/A" and avg_block_time > 0:
             daily_increase = 270000 / avg_block_time
-            daily_increase_delta = f"{int(daily_increase):,}"
+            daily_increase_delta = f"{int(daily_increase):,} BTC today"
         
-        col1.metric("Circulating Supply", f"{int(circulating_supply):,}", delta=daily_increase_delta)
+        col1.metric("Circulating Supply", f"{int(circulating_supply):,} BTC", delta=daily_increase_delta)
 
         percentage_of_terminal = circulating_supply / total_supply
         p_col1, _ = col1.columns([0.8, 0.2])
@@ -188,24 +187,64 @@ if btc_data:
         delta_str = "No Change"
         if prev_institutional_btc != "N/A" and prev_institutional_btc > 0:
             delta = institutional_btc - prev_institutional_btc
-            delta_str = f"{delta:,.0f}"
-        col2.metric("Institutional Holdings", f"{int(institutional_btc):,}", delta=delta_str)
+            delta_str = f"{delta:,.0f} BTC today"
+        
+        # Create custom layout with tooltip
+        with col2:
+            # Title with tooltip
+            st.markdown("""
+            <div class="tooltip-container">
+                <span class="tooltip-text"><strong>Institutional Holdings</strong> ℹ️</span>
+                <div class="tooltip-content">
+                    <strong>Institutional Holdings</strong> tracks Bitcoin held by:<br>
+                    • Public companies (MicroStrategy, Tesla, etc.)<br>
+                    • Private companies<br>
+                    • Mining companies<br>
+                    • Countries/governments<br>
+                    • ETFs and investment funds<br>
+                    • DeFi protocols<br><br>
+                    Data is updated daily and sourced from bitbo.io.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Value and delta display
+            st.markdown(f'<p style="font-size: 28px; margin: 0; font-weight: 600;">{int(institutional_btc):,} BTC</p>', unsafe_allow_html=True)
+            color = "green" if "+" in delta_str or delta_str == "No Change" else "red"
+            st.markdown(f'<p style="font-size: 14px; margin: 0; color: {color};">{delta_str}</p>', unsafe_allow_html=True)
+        
         percentage_of_total_supply = institutional_btc / total_supply
         p_col2, _ = col2.columns([0.8, 0.2])
         p_col2.progress(percentage_of_total_supply)
         col2.markdown(f'<p style="margin-top: -1rem; font-size: 0.875rem;">{percentage_of_total_supply:.2%} of 21M</p>', unsafe_allow_html=True)
     else:
-        col2.metric("Institutional Holdings", "N/A")
+        with col2:
+            st.markdown("""
+            <div class="tooltip-container">
+                <span class="tooltip-text"><strong>Institutional Holdings</strong> ℹ️</span>
+                <div class="tooltip-content">
+                    <strong>Institutional Holdings</strong> tracks Bitcoin held by:<br>
+                    • Public companies (MicroStrategy, Tesla, etc.)<br>
+                    • Private companies<br>
+                    • Mining companies<br>
+                    • Countries/governments<br>
+                    • ETFs and investment funds<br>
+                    • DeFi protocols<br><br>
+                    Data is updated daily and sourced from public disclosures and regulatory filings.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown(f'<p style="font-size: 28px; margin: 0; font-weight: 600;">N/A</p>', unsafe_allow_html=True)
 
     if latest_ma != "N/A":
         delta_str = "No Change"
         if prev_ma != "N/A" and prev_ma > 0:
             delta = latest_ma - prev_ma
             delta_percent = (delta / prev_ma) * 100
-            delta_str = f"{delta:,.0f} ({delta_percent:+.2f}%)"
-        col3.metric("7d On-chain Volume MA", f"{int(latest_ma):,}", delta=delta_str)
+            delta_str = f"{delta_percent:+.2f}% today"
+        col3.metric("Daily Onchain Volume (7d MA)", f"{int(latest_ma):,}", delta=delta_str)
     else:
-        col3.metric("7d On-chain Volume MA", "N/A")
+        col3.metric("Daily Onchain Volume (7d MA)", "N/A")
 
 else:
     st.error("Could not fetch Bitcoin data. Please try again later.")
@@ -236,6 +275,54 @@ h2 {
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
 }
+
+/* Tooltip styles */
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.tooltip-text {
+    display: inline-block;
+}
+
+.tooltip-content {
+    visibility: hidden;
+    width: 300px;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 6px;
+    padding: 12px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -150px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.tooltip-content::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+.tooltip-container:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+}
+
 @media (max-width: 800px) {
     div[data-testid="stHorizontalBlock"] {
         flex-wrap: wrap !important;
@@ -246,6 +333,13 @@ h2 {
     div[data-testid="stHorizontalBlock"] > div {
         flex: 1 1 calc(50% - 1rem) !important;
         min-width: calc(50% - 1rem) !important;
+    }
+    
+    /* Mobile tooltip adjustments */
+    .tooltip-content {
+        width: 250px;
+        margin-left: -125px;
+        font-size: 12px;
     }
 }
 </style>
