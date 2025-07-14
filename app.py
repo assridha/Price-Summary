@@ -152,14 +152,21 @@ if btc_data:
     price = btc_data.get('current_price', 'N/A')
     price_change = btc_data.get('price_change_percentage_24h', 0)
     
-    col1.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Price</p>', unsafe_allow_html=True)
-    price_value_str = f'<p style="font-size: 28px; line-height: 1;">${price:,.0f}</p>'
-    col1.markdown(price_value_str, unsafe_allow_html=True)
+    delta_html = ''
     if price_change is not None:
         color = "#2E8B57" if price_change >= 0 else "#D22B2B"
         arrow = "▲" if price_change >= 0 else "▼"
         delta_str = f"{abs(price_change):.2f}% (24h)"
-        col1.markdown(f'<p style="font-size: 0.875rem; color: {color}; margin:0;">{arrow} {delta_str}</p>', unsafe_allow_html=True)
+        delta_html = f'<p style="font-size: 0.875rem; color: {color}; margin: 0;">{arrow} {delta_str}</p>'
+
+    metric_html = f'''
+<div style="line-height: 1.2;">
+    <p style="font-size: 0.875rem; color: black; margin: 0;">Price</p>
+    <p style="font-size: 28px; margin: 0;">${price:,.0f}</p>
+    {delta_html}
+</div>
+'''
+    col1.markdown(metric_html, unsafe_allow_html=True)
 
     market_cap = btc_data.get('market_cap', 'N/A')
 
@@ -191,15 +198,19 @@ if btc_data:
         col1.metric("Block Height", "N/A")
 
     if avg_block_time != "N/A":
-        col2.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Avg Block Time</p>', unsafe_allow_html=True)
-        abt_value_str = f'<p style="font-size: 28px; line-height: 1;">{avg_block_time:.2f}s</p>'
-        col2.markdown(abt_value_str, unsafe_allow_html=True)
         delta_time = avg_block_time - 600
-        # For block time, lower is better. So red for positive delta.
         color = "#2E8B57" if delta_time <= 0 else "#D22B2B"
         arrow = "▼" if delta_time <= 0 else "▲"
         delta_str = f"{abs(delta_time):.2f}s vs target"
-        col2.markdown(f'<p style="font-size: 0.875rem; color: {color}; margin:0;">{arrow} {delta_str}</p>', unsafe_allow_html=True)
+
+        metric_html = f'''
+<div style="line-height: 1.2;">
+    <p style="font-size: 0.875rem; color: black; margin: 0;">Avg Block Time</p>
+    <p style="font-size: 28px; margin: 0;">{avg_block_time:.2f}s</p>
+    <p style="font-size: 0.875rem; color: {color}; margin: 0;">{arrow} {delta_str}</p>
+</div>
+'''
+        col2.markdown(metric_html, unsafe_allow_html=True)
     else:
         col2.metric("Avg Block Time", "N/A")
 
@@ -212,14 +223,18 @@ if btc_data:
             difficulty_in_terra = difficulty / (10**12)
             difficulty_change_percent = (change_factor - 1) * 100
             
-            col3.markdown('<p style="font-size: 0.875rem; color: black; margin:0;">Latest Difficulty</p>', unsafe_allow_html=True)
-            diff_value_str = f'<p style="font-size: 28px; line-height: 1;">{difficulty_in_terra:.2f} T</p>'
-            col3.markdown(diff_value_str, unsafe_allow_html=True)
-            # For difficulty, higher is better for network security.
             color = "#2E8B57" if difficulty_change_percent >= 0 else "#D22B2B"
             arrow = "▲" if difficulty_change_percent >= 0 else "▼"
             delta_str = f"{abs(difficulty_change_percent):.2f}%"
-            col3.markdown(f'<p style="font-size: 0.875rem; color: {color}; margin:0;">{arrow} {delta_str}</p>', unsafe_allow_html=True)
+
+            metric_html = f'''
+<div style="line-height: 1.2;">
+    <p style="font-size: 0.875rem; color: black; margin: 0;">Latest Difficulty</p>
+    <p style="font-size: 28px; margin: 0;">{difficulty_in_terra:.2f} T</p>
+    <p style="font-size: 0.875rem; color: {color}; margin: 0;">{arrow} {delta_str}</p>
+</div>
+'''
+            col3.markdown(metric_html, unsafe_allow_html=True)
         else:
             col3.metric("Latest Difficulty", "N/A")
     else:
@@ -285,7 +300,19 @@ if btc_data:
 Data is updated daily and sourced from bitbo.io. Change shown is daily average over the past 7 days.
 """
         
-        col2.markdown(f'<p style="font-size: 0.875rem; color: black; margin:0;" title="{tooltip_text.strip()}">Institutional Holdings</p>', unsafe_allow_html=True)
+        title_html = f'''
+<div style="font-size: 0.875rem; color: black; margin: 0; display: flex; align-items: center; justify-content: left;">
+    <span style="display: inline-block;">Institutional Holdings</span>
+    <div class="tooltip-container" style="margin-left: 5px;" tabindex="0">
+        <span class="info-icon">ⓘ</span>
+        <div class="tooltip-content">
+            {tooltip_text.strip()}
+        </div>
+    </div>
+</div>
+'''
+        col2.markdown(title_html, unsafe_allow_html=True)
+
         institutional_btc_str_value = f"""
         <div style="display: flex; align-items: baseline; justify-content: left; line-height: 1;">
             <span style="font-size: 28px;">{int(institutional_btc):,}</span>
@@ -309,7 +336,7 @@ Data is updated daily and sourced from bitbo.io. Change shown is daily average o
         p_col2.progress(percentage_of_total_supply)
         col2.markdown(f'<p style="margin-top: -1rem; font-size: 0.875rem;">{percentage_of_total_supply:.2%} of 21M</p>', unsafe_allow_html=True)
     else:
-        tooltip_text = """Institutional Holdings** tracks Bitcoin held by: Public companies (MicroStrategy, Tesla, etc.), Private companies, Mining companies, Countries/governments, ETFs and investment funds and DeFi protocols.
+        tooltip_text = """Institutional Holdings tracks Bitcoin held by: Public companies (MicroStrategy, Tesla, etc.), Private companies, Mining companies, Countries/governments, ETFs and investment funds and DeFi protocols.
 Data is updated daily and sourced from bitbo.io. Change shown is daily average over the past 7 days.
 """
         col2.metric(label="Institutional Holdings", value="N/A", help=tooltip_text)
@@ -408,9 +435,16 @@ h2 {
     border-color: #333 transparent transparent transparent;
 }
 
-.tooltip-container:hover .tooltip-content {
+.tooltip-container:hover .tooltip-content,
+.tooltip-container:focus .tooltip-content {
     visibility: visible;
     opacity: 1;
+}
+
+.info-icon {
+    font-style: normal;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 @media (max-width: 800px) {
