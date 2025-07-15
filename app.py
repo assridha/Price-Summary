@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 from datetime import timedelta, datetime
 import streamlit.components.v1 as components
+from concurrent.futures import ThreadPoolExecutor
 
 # Cache data for 60 seconds
 @st.cache_data(ttl=timedelta(minutes=1))
@@ -132,18 +133,43 @@ def get_institutional_btcs():
         st.error(f"Error fetching institutional holdings: {e}")
     return "N/A", "N/A"
 
+@st.cache_data(ttl=timedelta(minutes=1))
+def fetch_all_data():
+    """Fetches all data concurrently."""
+    with ThreadPoolExecutor(max_workers=7) as executor:
+        future_coingecko = executor.submit(get_coingecko_data)
+        future_block_height = executor.submit(get_block_height)
+        future_block_height_7d_ago = executor.submit(get_block_height_7d_ago)
+        future_avg_block_time = executor.submit(get_avg_block_time)
+        future_difficulty = executor.submit(get_difficulty_adjustment)
+        future_onchain_volume = executor.submit(get_onchain_volume_mas)
+        future_institutional_btc = executor.submit(get_institutional_btcs)
+
+        results = {
+            "btc_data": future_coingecko.result(),
+            "block_height": future_block_height.result(),
+            "block_height_7d_ago": future_block_height_7d_ago.result(),
+            "avg_block_time": future_avg_block_time.result(),
+            "difficulty_data": future_difficulty.result(),
+            "onchain_volume": future_onchain_volume.result(),
+            "institutional_btc": future_institutional_btc.result(),
+        }
+    return results
+
 st.set_page_config(page_title="Bitcoin Metrics Dashboard", layout="wide")
 
 # st.title("Bitcoin at a Glance")
 
 # Fetch data
-btc_data = get_coingecko_data()
-block_height = get_block_height()
-block_height_7d_ago = get_block_height_7d_ago()
-avg_block_time = get_avg_block_time()
-difficulty_data = get_difficulty_adjustment()
-latest_ma, prev_ma = get_onchain_volume_mas()
-institutional_btc, week_ago_institutional_btc = get_institutional_btcs()
+all_data = fetch_all_data()
+
+btc_data = all_data["btc_data"]
+block_height = all_data["block_height"]
+block_height_7d_ago = all_data["block_height_7d_ago"]
+avg_block_time = all_data["avg_block_time"]
+difficulty_data = all_data["difficulty_data"]
+latest_ma, prev_ma = all_data["onchain_volume"]
+institutional_btc, week_ago_institutional_btc = all_data["institutional_btc"]
 
 if btc_data:
     st.subheader("Price and Market Cap", anchor=False)
