@@ -161,7 +161,8 @@ st.set_page_config(page_title="Bitcoin Metrics Dashboard", layout="wide")
 # st.title("Bitcoin at a Glance")
 
 # Fetch data
-all_data = fetch_all_data()
+with st.spinner('Fetching latest data...'):
+    all_data = fetch_all_data()
 
 btc_data = all_data["btc_data"]
 block_height = all_data["block_height"]
